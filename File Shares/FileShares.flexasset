@@ -36,3 +36,8 @@ Name: Share Permissions
 Kind: Textbox
 Hint: What members have access?
 Checkboxes: Show in list
+
+Name: NTFS Permissions
+Kind: Textbox
+Hint: What members have security access to the root share folder?
+Checkboxes: Show in list
