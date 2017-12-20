@@ -54,8 +54,11 @@ function writeOutput {
     Write-Host "Disk Path:  `t" -ForegroundColor Gray -NoNewline
     Write-Host "`t `t" $DiskPath "`n"
 
-    <#Write-Host "Permissions:  `t" -ForegroundColor Gray -NoNewline
-    Write-Host "`t `t" $permissions "`n"#>
+    Write-Host "Permissions:  `t" -ForegroundColor Gray -NoNewline
+    Write-Host "`t `t" $permissions "`n"
+
+    Write-Host "NTFS Permissions:  `t" -ForegroundColor Gray -NoNewline
+    Write-Host "`t `t" $NTFSPermissions "`n"
 }
 
 function updateAPIConfigFile {
@@ -68,6 +71,7 @@ function updateAPIConfigFile {
     $api__key_name_SharePath = $api_config.key_name_SharePath
     $api__key_name_DiskPath = $api_config.key_name_DiskPath
     $api__key_name_Permissions = $api_config.key_name_Permissions
+    $api__key_name_NTFSPermissions = $api_config.key_name_NTFSPermissions
     
     
 @"
@@ -81,6 +85,7 @@ function updateAPIConfigFile {
         key_name_SharePath = '$api__key_name_SharePath'
         key_name_DiskPath = '$api__key_name_DiskPath'
         key_name_Permissions = '$api__key_name_Permissions'
+        key_name_NTFSPermissions = '$api__key_name_NTFSPermissions'
 }
 "@ | Out-File -FilePath $api -Force
 }
@@ -95,6 +100,7 @@ function formatAPIData {
     $api__key_name_SharePath = $api_config.key_name_SharePath
     $api__key_name_DiskPath = $api_config.key_name_DiskPath
     $api__key_name_Permissions = $api_config.key_name_Permissions
+    $api__key_name_NTFSPermissions = $api_config.key_name_NTFSPermissions
     
 
     if($api_config.org_id) {
@@ -144,6 +150,7 @@ function formatAPIData {
                     $api__key_name_SharePath = $writePath
                     $api__key_name_DiskPath = $DiskPath
                     $api__key_name_Permissions = $permissions
+                    $api__key_name_NTFSPermissions = $NTFSPermissions
                 }
             }
         }
@@ -214,6 +221,17 @@ else {
                 $ShareDescription= $description[$i]
                 $DiskPath= $path[$i]
 
+                $NTFSPermissions = ''
+                $acls = Get-Acl $DiskPath | select -ExpandProperty Access
+                $Identities = $acls | select IdentityReference,FileSystemRights
+                $formattedIdentities = ''
+                foreach($ident in $Identities) {
+                    $formattedIdentities = $formattedIdentities + "<p>" + $ident.IdentityReference  + "   -   " + $ident.FileSystemRights + "</p>"
+                }
+                $NTFSPermissions = $formattedIdentities
+                write-host $NTFSPermissions
+                
+
                 if(!$silent){writeOutput}
 
                 if($url -or $files) {
@@ -225,6 +243,7 @@ else {
                         "Share Path" = "$writePath"
                         "Disk Path" = "$DiskPath"
                         #"Permissions" = "$permissions"
+                        "NTFS Permissions" = "$NTFSPermissions"
                     }
                 }
                 if($file) {
